@@ -97,7 +97,6 @@ def main_windows():
     config = 'Release'
     if not os.path.exists(build_dir):
         os.mkdir(build_dir)
-    # Run configuration step
     try_cmake(here_dir, build_dir, *generator)
     subprocess.check_call(['cmake', '--build', build_dir, '--config', config])
     shutil.copy(os.path.join(build_dir, config, 'llvmlite.dll'), target_dir)
@@ -176,7 +175,7 @@ def main_posix(kind, library_ext):
     libs = run_llvm_config(llvm_config, "--system-libs --libs all".split())
     # Normalize whitespace (trim newlines)
     os.environ['LLVM_LIBS'] = \
-        '-llldCOFF -llldCommon -llldCore -llldDriver -llldELF -llldMachO -llldMinGW -llldReaderWriter -llldWasm -llldYAML ' + \
+        '-llldCommon -llldCore -llldDriver -llldELF -llldReaderWriter -llldWasm -llldYAML ' + \
         ' '.join(libs.split())
 
     cxxflags = run_llvm_config(llvm_config, ["--cxxflags"])
@@ -207,7 +206,7 @@ def main_posix(kind, library_ext):
     except NotImplementedError:
         default_makeopts = ""
     makeopts = os.environ.get('LLVMLITE_MAKEOPTS', default_makeopts).split()
-    subprocess.check_call(['make', '-f', makefile] + makeopts) #? should this also have `-B`?
+    subprocess.check_call(['make', '-f', makefile] + makeopts)
     shutil.copy('libllvmlite' + library_ext, target_dir)
 
 

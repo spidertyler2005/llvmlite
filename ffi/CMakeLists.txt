@@ -12,9 +12,12 @@ if(NOT MSVC)
 endif()
 
 find_package(LLVM REQUIRED CONFIG)
+find_package(LLD REQUIRED CONFIG)
 
 message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
 message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
+message(STATUS "Found LLD ${LLD_PACKAGE_VERSION}")
+message(STATUS "Using LLDConfig.cmake in: ${LLD_DIR}")
 
 # Set your project compile flags.
 # E.g. if using the C++ header files
@@ -30,7 +33,7 @@ set(CMAKE_REQUIRED_INCLUDES ${LLVM_INCLUDE_DIRS})
 CHECK_INCLUDE_FILES("llvm/IR/SVML.inc" HAVE_SVML)
 if(HAVE_SVML)
     message(STATUS "SVML found")
-    add_definitions(-DHAVE_SVML)
+    add_definitions(-DHAVE_SVML -DLLVM_ENABLE_PROJECTS="lld")
 else()
     message(STATUS "SVML not found")
 endif()
@@ -49,9 +52,13 @@ add_library(llvmlite SHARED assembly.cpp bitcode.cpp core.cpp initfini.cpp
 # Bug reported upstream at: https://bugs.llvm.org/show_bug.cgi?id=47003
 # BROKEN: llvm_map_components_to_libnames(llvm_libs all)
 if ($ENV{LLVMLITE_SHARED})
-    set(llvm_libs LLVM)
+    message("ENV LLVMLITE_SHARED")
+    set(llvm_libs lldCommon lldCore lldDriver lldELF lldReaderWriter lldWasm lldYAML LLVM)
 else()
-    set(llvm_libs ${LLVM_AVAILABLE_LIBS})
+    message("NOT ENV LLVMLITE_SHARED")
+    message(${LLVM_AVAILABLE_LIBS})
+    message("------------------------")
+    set(llvm_libs ${LLVM_AVAILABLE_LIBS} lldCommon lldCore lldDriver lldELF lldReaderWriter lldWasm lldYAML)
 endif()
 
 # Since LLVM 8 "OptRemarks" is built as a shared library only and also appears
