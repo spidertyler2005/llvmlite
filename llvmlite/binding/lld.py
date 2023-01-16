@@ -29,22 +29,22 @@ def lld_main(lld_args) -> str:
         args[i] = arg.encode()
     with ffi.OutputString() as outstr:
         r = ffi.lib.lld_main(len(lld_args), args, outstr)
-        if not r:
-            raise Exception("lld_main() failed, error code: %d" % r)
-
+        if r:
+            raise Exception("lld_main() failed, error code: %d\
+                            \nCommand Output: %s" % (r, str(outstr)))
         return str(outstr)
 
 
 def lld_runner(command: str):
-    '''creates lld functions while still allowing docstrings for users to see.'''
     def wrapped(output: str, objects: List[str], args: List[str] = []) -> str:
         '''
-        runs the command "{platform's lld command} -o {output-file} {*input_files} {*args}"
+        runs the command:
+        "{platform's lld command} -o {output-file} {*input_files} {*args}"
         output: output file as a str
         object: a list of input .o files as strings
         args: additional arguments for the command
         '''
-        return lld_main([command, "-o", output, *objects, *args])
+        return lld_main([command, '-o', output, *objects, *args])
     return wrapped
 
 
@@ -54,9 +54,13 @@ lld_linux = lld_runner("ld.lld")
 lld_wasm = lld_runner("wasm-ld")
 
 
-def lld_auto(output: str, objects: list[str], args: list[str] = [], add_extension = True) -> str:
+def lld_auto(output: str, objects: list[str],
+             args: list[str] = [],
+             add_extension=True) -> str:
     '''
-    Automatically determines which lld function to run based on the hosts system.
+    Automatically determines which lld function
+    to run based on the hosts system.
+
     Does not use `lld_wasm()`
 
     add_extension: adds `.exe` and other file endings automatically
