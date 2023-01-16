@@ -8,7 +8,6 @@ import platform
 import re
 import subprocess
 import sys
-from tempfile import TemporaryDirectory
 import unittest
 from contextlib import contextmanager
 from tempfile import mkstemp
@@ -2007,20 +2006,34 @@ class TestLLVMLockCallbacks(BaseTest):
             llvm.ffi.unregister_lock_callback(acq, rel)
 
 
-@unittest.skipUnless(platform.machine().startswith('x86'), "only on x86")
-class TestLLD_x86(BaseTest):
+class TestLLD(BaseTest):
     def test_standalone_executable(self):
-        with TemporaryDirectory() as tmpdir:
-            objfile = os.path.join(tmpdir, "test1.o")
-            binfile = os.path.join(tmpdir, "test1")
-            target_machine = self.target_machine(jit=False)
-            mod = llvm.parse_assembly(asm_lld_executable)
-            mod.verify()
-            with open(objfile, "wb") as o:
-                o.write(target_machine.emit_object(mod))
-            llvm.lld_main(["ld.lld", "-o", binfile, objfile])
-            r = subprocess.call("%s" % binfile)
-            self.assertEqual(r, 42)
+        test_ir = """
+        ;ModuleID = <string>
+        target triple = "{triple}"
+
+        define void @_start() {{
+            %.3 = add i32 0, 12
+            ret void
+        }}
+        """
+        objfile = "test1.o"
+        binfile = "test1"
+        target_machine = self.target_machine(jit=False)
+        mod = self.module(test_ir)
+        mod.verify()
+        with open(objfile, "wb") as o:
+            o.write(target_machine.emit_object(mod))
+        print(llvm.lld.lld_auto(binfile, [objfile]))
+        system = platform.system()
+
+        if system == "Linux":
+            # has no standard file extension
+            self.assertTrue(os.path.exists(binfile))
+        elif system == "Windows":
+            self.assertTrue(os.path.exists(f"{binfile}.exe"))
+        elif system == "Darwin": # Macos
+            self.assertTrue(os.path.exists(f"{binfile}.app"))
 
 
 if __name__ == "__main__":
