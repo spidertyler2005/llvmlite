@@ -97,7 +97,6 @@ def main_windows():
     config = 'Release'
     if not os.path.exists(build_dir):
         os.mkdir(build_dir)
-    # Run configuration step
     try_cmake(here_dir, build_dir, *generator)
     subprocess.check_call(['cmake', '--build', build_dir, '--config', config])
     shutil.copy(os.path.join(build_dir, config, 'llvmlite.dll'), target_dir)
@@ -175,7 +174,9 @@ def main_posix(kind, library_ext):
     # Get LLVM information for building
     libs = run_llvm_config(llvm_config, "--system-libs --libs all".split())
     # Normalize whitespace (trim newlines)
-    os.environ['LLVM_LIBS'] = ' '.join(libs.split())
+    os.environ['LLVM_LIBS'] = \
+        '-llldCommon -llldCore -llldDriver -llldELF -llldReaderWriter -llldWasm -llldYAML ' + \
+        ' '.join(libs.split())
 
     cxxflags = run_llvm_config(llvm_config, ["--cxxflags"])
     # on OSX cxxflags has null bytes at the end of the string, remove them
