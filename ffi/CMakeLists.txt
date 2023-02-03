@@ -38,6 +38,7 @@ else()
     message(STATUS "SVML not found")
 endif()
 
+add_definitions(-DLLVM_ENABLE_PROJECTS="lld")
 
 # Define our shared library
 add_library(llvmlite SHARED assembly.cpp bitcode.cpp core.cpp initfini.cpp
@@ -52,13 +53,9 @@ add_library(llvmlite SHARED assembly.cpp bitcode.cpp core.cpp initfini.cpp
 # Bug reported upstream at: https://bugs.llvm.org/show_bug.cgi?id=47003
 # BROKEN: llvm_map_components_to_libnames(llvm_libs all)
 if ($ENV{LLVMLITE_SHARED})
-    message("ENV LLVMLITE_SHARED")
-    set(llvm_libs lldCommon lldCore lldDriver lldELF lldReaderWriter lldWasm lldYAML LLVM)
+    set(llvm_libs $ENV{lld_libs} LLVM)
 else()
-    message("NOT ENV LLVMLITE_SHARED")
-    message(${LLVM_AVAILABLE_LIBS})
-    message("------------------------")
-    set(llvm_libs ${LLVM_AVAILABLE_LIBS} lldCommon lldCore lldDriver lldELF lldReaderWriter lldWasm lldYAML)
+    set(llvm_libs ${LLVM_AVAILABLE_LIBS} $ENV{lld_libs})
 endif()
 
 # Since LLVM 8 "OptRemarks" is built as a shared library only and also appears

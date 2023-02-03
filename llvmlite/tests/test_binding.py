@@ -2007,6 +2007,10 @@ class TestLLVMLockCallbacks(BaseTest):
 
 
 class TestLLD(BaseTest):
+    def target_machine(self, *, jit):
+        target = llvm.Target.from_default_triple()
+        return target.create_target_machine(jit=jit, force_elf=True)
+
     def test_standalone_executable(self):
         test_ir = """
         ;ModuleID = <string>
